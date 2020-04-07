@@ -27,13 +27,15 @@ def generate_pnglists(artprints, length):
     for (artist, reprints) in artprints.items():
         for chunk in [reprints[x:x+length] for x in range(0, len(reprints), length)]:
             (chunked_old_pngids, chunked_new_pngids) = zip(*chunk)
-            old_pngids = [pngid for pngid in chunked_old_pngids if pngid]
-            new_pngids = [pngid for pngid in chunked_new_pngids if pngid]
-            if old_pngids and new_pngids:
+            if any(chunked_old_pngids) and any(chunked_new_pngids):
+                old_pngids = [pngid for pngid in chunked_old_pngids if pngid]
+                new_pngids = [new_pngid or old_pngid for (old_pngid, new_pngid) in chunk]
                 acc["updated"].append((old_pngids, new_pngids))
-            elif old_pngids:
+            elif any(chunked_old_pngids):
+                old_pngids = [pngid for pngid in chunked_old_pngids if pngid]
                 acc["unchanged"].append(old_pngids)
             else:
+                new_pngids = [pngid for pngid in chunked_new_pngids if pngid]
                 acc["new"].append(new_pngids)
     return acc
 
@@ -114,10 +116,10 @@ if __name__ == "__main__":
         print("rm " + " ".join(files))
         exit(0)
 
-    if categorised["new"]:
-        print("new:")
-        for new_pnglist in categorised["new"]:
-            print(encode_pnglist(new_pnglist))
+    if categorised["unchanged"]:
+        print("unchanged:")
+        for old_pnglist in categorised["unchanged"]:
+            print(encode_pnglist(old_pnglist))
         print()
 
     if categorised["updated"]:
@@ -127,7 +129,7 @@ if __name__ == "__main__":
                                     encode_pnglist(new_pnglist)))
         print()
 
-    if categorised["unchanged"]:
-        print("unchanged:")
-        for old_pnglist in categorised["unchanged"]:
-            print(encode_pnglist(old_pnglist))
+    if categorised["new"]:
+        print("new:")
+        for new_pnglist in categorised["new"]:
+            print(encode_pnglist(new_pnglist))
